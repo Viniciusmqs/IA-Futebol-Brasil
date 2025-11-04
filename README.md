@@ -52,8 +52,8 @@ ia-futebol-brasil/
 ├── requirements.txt   # dependências do ambiente principal (dados + frontend)
 └── README.md
 
-
-## 🛠️ Tecnologias Utilizadas
+---
+🛠️ Tecnologias Utilizadas
 
 Linguagem: Python 3.10+ (testado em 3.13)
 
@@ -67,7 +67,7 @@ Frontend: Streamlit, Plotly, Requests
 
 Ambiente: VSCode, Jupyter Notebooks
 
-## 📦 Pré-requisitos
+📦 Pré-requisitos
 
 Antes de começar, você precisa ter instalado:
 
@@ -81,7 +81,7 @@ Git
 git clone https://github.com/Viniciusmqs/IA-Futebol-Brasil.git
 cd IA-Futebol-Brasil
 
-## 🧬 Ambiente de Dados e Frontend (raiz)
+🧬 Ambiente de Dados e Frontend (raiz)
 
 Na raiz do projeto, crie e ative um ambiente virtual:
 
@@ -99,7 +99,7 @@ pip install streamlit requests plotly
 Obs.: requirements.txt contém as bibliotecas base de dados e IA.
 O comando extra garante as libs usadas no dashboard.
 
-## 🗂️ Dados
+🗂️ Dados
 
 O projeto espera encontrar os dados no diretório:
 
@@ -116,7 +116,7 @@ Ou utilizar a base final já fornecida (se estiver versionada no repositório)
 
 Por questões de tamanho e licença, arquivos de dados brutos podem não estar incluídos no repositório.
 
-## 🌐 Rodando o Backend (API FastAPI)
+🌐 Rodando o Backend (API FastAPI)
 
 O backend tem seu próprio ambiente virtual (recomendado).
 
@@ -139,9 +139,9 @@ uvicorn app.main:app --reload
 Por padrão, a API estará disponível em:
 
 Swagger (documentação interativa):
-## 👉 http://127.0.0.1:8000/docs
+👉 http://127.0.0.1:8000/docs
 
-## 🖥️ Rodando o Frontend (Streamlit)
+🖥️ Rodando o Frontend (Streamlit)
 
 Com o ambiente virtual da raiz ativado:
 
@@ -157,7 +157,7 @@ streamlit run frontend/app.py
 
 O dashboard ficará disponível em:
 
-## 👉 http://localhost:8501
+👉 http://localhost:8501
 
 O que o usuário pode fazer no dashboard?
 
@@ -213,7 +213,7 @@ Reproduzir experimentos
 
 Apresentar o processo em contexto acadêmico
 
-## 🔮 Próximos Passos
+🔮 Próximos Passos
 
 Testar modelos mais avançados (XGBoost, CatBoost, etc.)
 
@@ -223,7 +223,7 @@ Criar temas visuais mais “gamificados” para o dashboard
 
 Publicar API + frontend em um serviço de nuvem (Render, Railway, etc.)
 
-## 📚 Licença e Uso
+📚 Licença e Uso
 
 Projeto desenvolvido para fins acadêmicos e de estudo.
 Os dados utilizados são de campeonatos oficiais brasileiros e podem estar sujeitos a termos de uso das fontes originais.
