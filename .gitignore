@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Ambientes virtuais
+.venv/
+backend/.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Arquivos de sistema (macOS)
+.DS_Store
