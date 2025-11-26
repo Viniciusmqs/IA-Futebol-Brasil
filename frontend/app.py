@@ -38,15 +38,17 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }}
 
+
     /* Main container */
     [data-testid="stApp"] {{
         background: linear-gradient(135deg, {BACKGROUND_CARD} 0%, #22273A 100%);
         border-radius: 28px;
         box-shadow: 0 12px 48px rgba(0, 255, 65, 0.08), 0 2px 6px rgba(0, 0, 0, 0.4);
         padding: 40px;
-        margin: 50px auto;
+        margin: 0px;
+        margin-top: 50px;
         max-width: 1550px;
-        border: 1.5px solid {ACCENT_COLOR}30;
+        border: 3px solid {ACCENT_COLOR}30;
     }}
 
     /* Sidebar styling */
@@ -364,11 +366,21 @@ st.markdown(
 
     .st-emotion-cache-oteskg:hover:enabled, 
     .st-emotion-cache-oteskg:focus:enabled {{
-    color: rgb(255, 255, 255);
-    background-color: #00FF41;;
+    color: black;
+    background-color: #00FF41;
+    border-radius: 8px;
     transition: none;
     outline: none;
-}}
+    }}
+
+    .st-emotion-cache-1itdyc2 {{
+        margin-left: 50px;
+        margin-top: 35px;
+        margin-bottom: 35px;
+    }}
+    
+
+
 
     </style>
     """,
@@ -379,7 +391,7 @@ st.markdown(
     f"""
     <div style="display: flex; align-items: center; gap: 15px;">
         <span> IA FUTEBOL BRASIL</span>
-        <span class="bouncing-ball">⚽⚽⚽⚽</span>
+        <span class="bouncing-ball"> ⚽ </span>
     </div>
     """,
     unsafe_allow_html=True
