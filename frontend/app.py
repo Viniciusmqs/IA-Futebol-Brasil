@@ -1,728 +1,669 @@
-import requests
 import streamlit as st
+import requests
 import pandas as pd
-import plotly.express as px
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import plotly.express as px
+import time
+import unicodedata
+
+# ==============================================================================
+# 1. CONFIGURAÇÃO VISUAL "FIFA ULTIMATE TEAM"
+# ==============================================================================
+st.set_page_config(
+    page_title="IA Futebol Brasil | Ultimate Engine",
+    page_icon="⚽",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 API_URL = "http://127.0.0.1:8000"
 
-PRIMARY_COLOR = "#FFFFFF"
-SECONDARY_COLOR = "#1E293B"
-ACCENT_COLOR = "#00FF41"    # Neon green for key highlights
-ACCENT_CYAN = "#00D9FF"     # Cyan for secondary accents
-ACCENT_PINK = "#FF006E"     # Pink for warnings/danger
-BACKGROUND_DARK = "#0A0E27" # Ultra dark background
-BACKGROUND_CARD = "#1A1F3A" # Dark card background
-BORDER_COLOR = "#2D3748"    # Dark borders
-TEXT_LIGHT = "#E2E8F0"      # Light text for contrast
-TEXT_SECONDARY = "#94A3B8"  # Secondary text gray
-
-st.set_page_config(
-    page_title="IA Futebol Brasil | Análise Tática Avançada ⚽",
-    page_icon="🏆",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-st.markdown(
-    f"""
+# CSS Profissional: Glassmorphism, Fontes Tecnológicas e Hero Cards Dinâmicos
+st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600&display=swap');
 
-    /* Base styling - Dark mode */
-    html, body, [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(135deg, {BACKGROUND_DARK} 0%, #0F1424 100%);
-        background-attachment: fixed;
-        color: {TEXT_LIGHT};
+    /* Fundo Global com Gradiente Profundo */
+    .stApp {
+        background-color: #0b0c10;
+        background-image: radial-gradient(circle at 50% 0%, #1f2833 0%, #0b0c10 80%);
+        color: #ffffff;
         font-family: 'Inter', sans-serif;
-    }}
+    }
 
+    /* Títulos */
+    h1, h2, h3 {
+        font-family: 'Rajdhani', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
 
-    /* Main container */
-    [data-testid="stApp"] {{
-        background: linear-gradient(135deg, {BACKGROUND_CARD} 0%, #22273A 100%);
-        border-radius: 28px;
-        box-shadow: 0 12px 48px rgba(0, 255, 65, 0.08), 0 2px 6px rgba(0, 0, 0, 0.4);
-        padding: 40px;
-        margin: 0px;
-        margin-top: 50px;
-        max-width: 1550px;
-        border: 3px solid {ACCENT_COLOR}30;
-    }}
-
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, {BACKGROUND_CARD} 0%, #1A1F3A 100%);
-        border-right: 3px solid {ACCENT_COLOR}40;
+    /* --- HERO CARD (O ESTÁDIO) --- */
+    .hero-card {
+        position: relative;
+        height: 400px;
         border-radius: 24px;
-        box-shadow: 3px 0 24px rgba(0, 255, 65, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }}
-
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
-        color: {TEXT_LIGHT};
-        font-family: 'Sora', sans-serif;
-        font-weight: 700;
-        letter-spacing: -0.8px;
-    }}
-
-    /* Heading styles */
-    h1, h2, h3 {{
-        color: {TEXT_LIGHT};
-        font-family: 'Sora', sans-serif;
-        font-weight: 700;
-        letter-spacing: -0.8px;
-    }}
-
-    h1 {{
-        color:{ACCENT_COLOR };
-        font-size: 3.2em;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
         align-items: center;
-        gap: 15px;
-    }}
-
-    h2 {{
-        font-size: 1.9em;
-        color: {TEXT_LIGHT};
-        margin-top: 32px;
-        margin-bottom: 16px;
-        border-bottom: 4px solid {ACCENT_COLOR};
-        padding-bottom: 12px;
-        display: inline-block;
-        box-shadow: 0 4px 12px {ACCENT_COLOR}20;
-    }}
-
-    h3 {{
-        font-size: 1.35em;
-        color: {TEXT_LIGHT};
-        font-weight: 600;
-    }}
-
-    /* Caption styling */
-    .st-emotion-cache-nahz7x p {{
-        color: {TEXT_SECONDARY};
-        font-size: 1.05em;
-        line-height: 1.6;
-    }}
-
-    /* Button styling with neon glow */
-    .stButton>button {{
-        border: 2px solid {ACCENT_COLOR};
-        color: #0A0E27;
-        background: transparent;
-        border-radius: 14px;
-        font-weight: 700;
-        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        text-transform: uppercase;
-        letter-spacing: 1.8px;
-        font-size: 0.82em;
-        padding: 14px 28px !important;
-        box-shadow: 0 6px 20px {ACCENT_COLOR}50, 0 0 15px {ACCENT_COLOR}30;
-        position: relative;
-        overflow: hidden;
-    }}
-
-    .stButton>button::before {{
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }}
-
-    .stButton>button:hover {{
-        background: {ACCENT_COLOR};
-        box-shadow: 0 12px 40px {ACCENT_COLOR}70, 0 0 30px {ACCENT_COLOR}60;
-        transform: translateY(-4px);
-        border-color: {ACCENT_COLOR};
-        text-color: black !important;
-    }}
-
-    .stButton>button:active {{
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px {ACCENT_COLOR}40;
-    }}
-
-    /* Metric styling */
-    [data-testid="stMetricValue"] {{
-        color: {ACCENT_COLOR};
-        font-size: 2.6rem;
-        font-weight: 800;
-        font-family: 'Sora', sans-serif;
-        text-shadow: 0 2px 8px {ACCENT_COLOR}30;
-    }}
-
-    [data-testid="stMetricLabel"] {{
-        color: {TEXT_SECONDARY};
-        font-size: 0.95em;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-    }}
-
-    /* Metric container */
-    [data-testid="stMetric"] {{
-        background: linear-gradient(135deg, {BACKGROUND_CARD} 0%, #1F2639 100%);
-        border: 1.5px solid {ACCENT_COLOR}20;
-        border-radius: 18px;
-        padding: 24px;
-        box-shadow: 0 4px 16px rgba(0, 255, 65, 0.05), 0 1px 3px rgba(0, 0, 0, 0.3);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow: hidden;
-        position: relative;
-    }}
-
-    [data-testid="stMetric"]::before {{
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, {ACCENT_COLOR}15, transparent);
-        transition: left 0.6s ease;
-    }}
-
-    [data-testid="stMetric"]:hover {{
-        border-color: {ACCENT_COLOR}40;
-        box-shadow: 0 16px 32px {ACCENT_COLOR}15, 0 2px 6px rgba(0, 0, 0, 0.4);
-        transform: translateY(-6px);
-    }}
-
-    [data-testid="stMetric"]:hover::before {{
-        left: 100%;
-    }}
-
-    /* Container styling */
-    .st-emotion-cache-1pxpx8z {{
-        background: linear-gradient(135deg, {BACKGROUND_CARD} 0%, #1F2639 100%);
-        border: 1.5px solid {BORDER_COLOR};
-        border-radius: 18px;
-        padding: 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 4px 16px rgba(0, 255, 65, 0.04);
-    }}
-
-    /* Expander styling */
-    .st-expander {{
-        background: {BACKGROUND_CARD};
-        border: 1.5px solid {BORDER_COLOR};
-        border-radius: 18px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
-        margin-bottom: 18px;
-        transition: all 0.3s ease;
-    }}
-
-    .st-expander:hover {{
-        border-color: {ACCENT_COLOR}35;
-        box-shadow: 0 8px 24px {ACCENT_COLOR}12;
-    }}
-
-    .st-expander details summary {{
-        color: {TEXT_LIGHT};
-        font-weight: 700;
-        padding: 20px 24px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1.1em;
-        border-left: 5px solid transparent;
-        background: linear-gradient(90deg, {ACCENT_COLOR}08 0%, transparent 100%);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }}
-
-    .st-expander details summary:hover {{
-        background: linear-gradient(90deg, {ACCENT_COLOR}12 0%, transparent 100%);
-        border-left-color: {ACCENT_COLOR};
-        padding-left: 20px;
-    }}
-
-    .st-expander details[open] summary {{
-        background: linear-gradient(90deg, {ACCENT_COLOR}12 0%, transparent 100%);
-        border-left-color: {ACCENT_COLOR};
-        box-shadow: inset 0 4px 12px {ACCENT_COLOR}10;
-    }}
-
-    /* Input styling */
-    .st-emotion-cache-rnrmy {{
-        color: {TEXT_LIGHT};
-        font-weight: 600;
-        font-size: 0.95em;
-    }}
-
-    .st-emotion-cache-ue6h4q {{
-        background: {BACKGROUND_CARD};
-        border: 2px solid {BORDER_COLOR} !important;
-        border-radius: 12px;
-        color: {TEXT_LIGHT};
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }}
-
-    .st-emotion-cache-ue6h4q:focus-within {{
-        border-color: {ACCENT_COLOR} !important;
-        box-shadow: 0 0 0 4px {ACCENT_COLOR}20, 0 4px 12px {ACCENT_COLOR}25;
-    }}
-
-    /* Alert styling */
-    [data-testid="stAlert"] {{
-        border-radius: 14px;
-        background: {BACKGROUND_CARD};
-        border-left: 6px solid {ACCENT_COLOR};
-        border: 1.5px solid {BORDER_COLOR};
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }}
-
-    [data-testid="stAlert"] div[data-testid="stMarkdownContainer"] p {{
-        color: {TEXT_LIGHT};
-        font-size: 0.95em;
-        line-height: 1.6;
-    }}
-
-    /* Markdown styling */
-    [data-testid="stMarkdownContainer"] {{
-        color: {TEXT_LIGHT};
-    }}
-
-    p {{
-        color: {TEXT_LIGHT};
-        line-height: 1.6;
-    }}
-
-    /* Link styling */
-    a {{
-        color: {ACCENT_COLOR};
-        text-decoration: none;
-        font-weight: 700;
-        transition: all 0.3s ease;
-    }}
-
-    a:hover {{
-        color: {ACCENT_CYAN};
-        text-decoration: underline;
-    }}
-
-    /* Number input */
-    input[type="number"] {{
-        background: {PRIMARY_COLOR} !important;
-        border: 2px solid {BORDER_COLOR} !important;
-        color: {BACKGROUND_DARK } !important;
-        border-radius: 12px;
-        font-weight: 500;
-    }}
-
-    /* Column styling */
-    .st-emotion-cache-ocqkz7 {{
-        background: linear-gradient(135deg, {BACKGROUND_CARD} 0%, #1F2639 100%);
-        border-radius: 18px;
-        padding: 24px;
-        border: 1.5px solid {BORDER_COLOR};
-        transition: all 0.4s ease;
-    }}
-
-    .st-emotion-cache-ocqkz7:hover {{
-        border-color: {ACCENT_COLOR}30;
-        box-shadow: 0 12px 32px {ACCENT_COLOR}12;
-        transform: translateY(-4px);
-    }}
-
-    /* Added bouncing ball animation */
-    @keyframes bounce-ball {{
-        0%, 100% {{ transform: translateY(0) scale(1); }}
-        50% {{ transform: translateY(-20px) scale(1.05); }}
-    }}
-
-    @keyframes glow-pulse {{
-        0%, 100% {{ filter: drop-shadow(0 0 8px {ACCENT_COLOR}60); }}
-        50% {{ filter: drop-shadow(0 0 16px {ACCENT_COLOR}100); }}
-    }}
-
-    .bouncing-ball {{
-        display: inline-block;
-        animation: bounce-ball 0.8s ease-in-out infinite, glow-pulse 1.2s ease-in-out infinite;
-        font-size: 1.5em;
-        margin-left: 10px;
-    }}
-
-    .st-emotion-cache-oteskg:hover{{
-        background: {ACCENT_COLOR} !important;
-        color: {BACKGROUND_DARK} !important;
-        border-radius: 8px;
-    }}
-
-    .st-emotion-cache-oteskg:selected{{
-        background: {ACCENT_COLOR} !important;
-        color: {BACKGROUND_DARK} !important;
-        border-radius: 8px;
-    }}
-
-    .st-emotion-cache-oteskg:hover:enabled, 
-    .st-emotion-cache-oteskg:focus:enabled {{
-    color: black;
-    background-color: #00FF41;
-    border-radius: 8px;
-    transition: none;
-    outline: none;
-    }}
-
-    .st-emotion-cache-1itdyc2 {{
-        margin-left: 50px;
-        margin-top: 35px;
-        margin-bottom: 35px;
-    }}
+        text-align: center;
+        transition: all 0.5s ease;
+        background-size: cover;
+        background-position: center;
+    }
     
+    .hero-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        border-color: rgba(255,255,255,0.4);
+    }
 
+    /* Camada escura sobre a foto do estádio para ler o texto */
+    .hero-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%);
+        z-index: 1;
+    }
 
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        padding-bottom: 40px;
+        width: 100%;
+    }
 
+    .team-logo-hero {
+        width: 180px;
+        height: 180px;
+        filter: drop-shadow(0 0 30px rgba(0,0,0,0.7));
+        margin-bottom: 15px;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .team-logo-hero:hover { transform: scale(1.1); }
+
+    .stadium-badge {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: inline-block;
+        margin-top: 15px;
+        color: #ddd;
+    }
+
+    /* --- PAINEL DE CONTROLE (GLASSMORPHISM) --- */
+    .control-panel {
+        background: rgba(30, 35, 45, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 25px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+    }
+
+    /* Botão Neon "Matador" */
+    .stButton > button {
+        background: linear-gradient(90deg, #00F260 0%, #0575E6 100%);
+        color: #fff;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 800;
+        font-size: 1.5rem;
+        padding: 20px;
+        border: none;
+        border-radius: 12px;
+        text-transform: uppercase;
+        width: 100%;
+        box-shadow: 0 0 30px rgba(5, 117, 230, 0.5);
+        transition: all 0.4s ease;
+        letter-spacing: 2px;
+    }
+    
+    .stButton > button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 60px rgba(5, 117, 230, 0.8);
+        color: #fff;
+    }
+
+    /* Veredito Box (Resultado) */
+    .veredito-box {
+        background: rgba(20, 20, 30, 0.9);
+        border-radius: 16px;
+        padding: 30px;
+        border-left: 10px solid; /* Cor dinâmica via Python */
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        margin-top: 20px;
+        animation: slideUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Ajuste de Métricas e Textos */
+    [data-testid="stMetricValue"] {
+        font-family: 'Rajdhani';
+        font-size: 2.8rem;
+        text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+    
+    /* Inputs customizados */
+    .stSelectbox label, .stSlider label {
+        color: #66fcf1 !important;
+        font-weight: 600;
+        font-size: 1rem;
+    }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
-st.markdown(
-    f"""
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <span> IA FUTEBOL BRASIL</span>
-        <span class="bouncing-ball"> ⚽ </span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# ==============================================================================
+# 2. MEGABASE DE DADOS (ESTÁDIOS E TIMES SEPARADOS)
+# ==============================================================================
 
-st.title("Projeção Tática Avançada")
-st.caption(f"🚀 Análise e Predição de Confrontos do Brasileirão Série A | **Impulsionado por IA com Tecnologia de Última Geração**")
+# Banco de Estádios com Capacidade e Imagem (URLs verificadas)
+STADIUMS_DB = {
+    "Maracanã (RJ)": {"capacity": 78838, "img": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jornalista_M%C3%A1rio_Filho#/media/Ficheiro:Vis%C3%A3o_do_torcedor.JPG"},
+    "Allianz Parque (SP)": {"capacity": 43713, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Allianz_Parque_Panorama_2015.jpg/1280px-Allianz_Parque_Panorama_2015.jpg"},
+    "Neo Química Arena (SP)": {"capacity": 49205, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Arena_Corinthians_by_Diego_33.jpg/1280px-Arena_Corinthians_by_Diego_33.jpg"},
+    "Morumbi (SP)": {"capacity": 66795, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Est%C3%A1dio_do_Morumbi_2017.jpg/1280px-Est%C3%A1dio_do_Morumbi_2017.jpg"},
+    "Mineirão (MG)": {"capacity": 61846, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Arena_MRV_2023.jpg/1280px-Arena_MRV_2023.jpg"},
+    "Beira-Rio (RS)": {"capacity": 50128, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Beira-Rio_aerial_view.jpg/1280px-Beira-Rio_aerial_view.jpg"},
+    "Arena do Grêmio (RS)": {"capacity": 55662, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Arena_do_Gr%C3%AAmio_-_2012-12-08_-_007.jpg/1280px-Arena_do_Gr%C3%AAmio_-_2012-12-08_-_007.jpg"},
+    "Nilton Santos (RJ)": {"capacity": 44661, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Engenh%C3%A3o_panorama_no_pelo.jpg/1280px-Engenh%C3%A3o_panorama_no_pelo.jpg"},
+    "São Januário (RJ)": {"capacity": 21880, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/S%C3%A3o_Janu%C3%A1rio_-_Vasco_x_Coritiba.jpg/1280px-S%C3%A3o_Janu%C3%A1rio_-_Vasco_x_Coritiba.jpg"},
+    "Vila Belmiro (SP)": {"capacity": 16068, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Vila_Belmiro_a%C3%A9rea.jpg/1280px-Vila_Belmiro_a%C3%A9rea.jpg"},
+    "Arena Fonte Nova (BA)": {"capacity": 50025, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Arena_Fonte_Nova_2014.jpg/1280px-Arena_Fonte_Nova_2014.jpg"},
+    "Arena Castelão (CE)": {"capacity": 63903, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Castel%C3%A3o_Arena_in_Fortaleza.jpg/1280px-Castel%C3%A3o_Arena_in_Fortaleza.jpg"},
+    "Ligga Arena (PR)": {"capacity": 42372, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Arena_da_Baixada_2018.jpg/1280px-Arena_da_Baixada_2018.jpg"},
+    "Nabi Abi Chedid (SP)": {"capacity": 17029, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Est%C3%A1dio_Nabi_Abi_Chedid.jpg/1280px-Est%C3%A1dio_Nabi_Abi_Chedid.jpg"},
+    "Arena Pantanal (MT)": {"capacity": 44097, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Arena_Pantanal_2018.jpg/1280px-Arena_Pantanal_2018.jpg"},
+    "Alfredo Jaconi (RS)": {"capacity": 19924, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Alfredo_Jaconi_2021.jpg/1280px-Alfredo_Jaconi_2021.jpg"},
+    "Heriberto Hülse (SC)": {"capacity": 19225, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Est%C3%A1dio_Heriberto_H%C3%BClse.jpg/1280px-Est%C3%A1dio_Heriberto_H%C3%BClse.jpg"},
+    "Barradão (BA)": {"capacity": 30618, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Barrad%C3%A3o_2019.jpg/1280px-Barrad%C3%A3o_2019.jpg"},
+    "Antônio Accioly (GO)": {"capacity": 12500, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Est%C3%A1dio_Ant%C3%B4nio_Accioly.jpg/1280px-Est%C3%A1dio_Ant%C3%B4nio_Accioly.jpg"},
+    "Genérico": {"capacity": 30000, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Soccer_Field_Transverse.svg/1280px-Soccer_Field_Transverse.svg.png"}
+}
 
+# Banco de Times (Cores e Logos) - Mapeamento para Chaves Normalizadas
+TEAMS_DB = {
+    # GIGANTES / SÉRIE A
+    "flamengo": {"logo": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Flamengo_braz_logo.svg", "colors": ["#C3281E", "#000000"], "stadium": "Maracanã (RJ)"},
+    "palmeiras": {"logo": "https://upload.wikimedia.org/wikipedia/commons/1/10/Palmeiras_logo.svg", "colors": ["#006437", "#FFFFFF"], "stadium": "Allianz Parque (SP)"},
+    "sao paulo": {"logo": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg", "colors": ["#FE0000", "#FFFFFF"], "stadium": "Morumbi (SP)"},
+    "corinthians": {"logo": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Sport_Club_Corinthians_Paulista_crest.svg", "colors": ["#111111", "#FFFFFF"], "stadium": "Neo Química Arena (SP)"},
+    "atletico mineiro": {"logo": "https://upload.wikimedia.org/wikipedia/commons/2/27/Clube_Atl%C3%A9tico_Mineiro_logo.svg", "colors": ["#000000", "#FFFFFF"], "stadium": "Arena MRV (MG)"},
+    "gremio": {"logo": "https://upload.wikimedia.org/wikipedia/commons/5/50/Gr%C3%AAmio_FBPA_logo.svg", "colors": ["#0D80BF", "#000000"], "stadium": "Arena do Grêmio (RS)"},
+    "internacional": {"logo": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Escudo_do_Sport_Club_Internacional.svg", "colors": ["#E5050F", "#FFFFFF"], "stadium": "Beira-Rio (RS)"},
+    "botafogo": {"logo": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Botafogo_de_Futebol_e_Regatas_logo.svg", "colors": ["#000000", "#FFFFFF"], "stadium": "Nilton Santos (RJ)"},
+    "fluminense": {"logo": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Fluminense_FC_escudo.png", "colors": ["#9F022D", "#00913C"], "stadium": "Maracanã (RJ)"},
+    "cruzeiro": {"logo": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Cruzeiro_Esporte_Clube_%28logo%29.svg", "colors": ["#005CA9", "#FFFFFF"], "stadium": "Mineirão (MG)"},
+    "vasco": {"logo": "https://upload.wikimedia.org/wikipedia/commons/6/67/Vasco_da_Gama_logo.svg", "colors": ["#000000", "#FFFFFF"], "stadium": "São Januário (RJ)"},
+    "bahia": {"logo": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Esporte_Clube_Bahia_logo.svg", "colors": ["#009CA6", "#EC1C24"], "stadium": "Arena Fonte Nova (BA)"},
+    "fortaleza": {"logo": "https://upload.wikimedia.org/wikipedia/commons/4/42/Crest_of_Fortaleza_Esporte_Clube.svg", "colors": ["#12207B", "#C8102E"], "stadium": "Arena Castelão (CE)"},
+    "athletico": {"logo": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Club_Athl%C3%A9tico_Paranaense_2019.svg", "colors": ["#C8102E", "#000000"], "stadium": "Ligga Arena (PR)"},
+    "bragantino": {"logo": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Red_Bull_Bragantino.svg", "colors": ["#FFFFFF", "#D30F16"], "stadium": "Nabi Abi Chedid (SP)"},
+    "cuiaba": {"logo": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Cuiab%C3%A1_Esporte_Clube_logo.svg", "colors": ["#01592E", "#F4E409"], "stadium": "Arena Pantanal (MT)"},
+    "atletico goianiense": {"logo": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Atl%C3%A9tico_Clube_Goianiense_logo.svg", "colors": ["#EC1C24", "#000000"], "stadium": "Antônio Accioly (GO)"},
+    "juventude": {"logo": "https://upload.wikimedia.org/wikipedia/commons/5/52/Juventude_logo.svg", "colors": ["#00913C", "#FFFFFF"], "stadium": "Alfredo Jaconi (RS)"},
+    "criciuma": {"logo": "https://upload.wikimedia.org/wikipedia/commons/8/87/Crici%C3%BAma_Esporte_Clube_logo.svg", "colors": ["#FDD116", "#000000"], "stadium": "Heriberto Hülse (SC)"},
+    "vitoria": {"logo": "https://upload.wikimedia.org/wikipedia/commons/8/80/Esporte_Clube_Vit%C3%B3ria_logo.svg", "colors": ["#EC1C24", "#000000"], "stadium": "Barradão (BA)"},
+    
+    # OUTROS / SÉRIE B (Para não faltar escudo)
+    "santos": {"logo": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png", "colors": ["#FFFFFF", "#000000"], "stadium": "Vila Belmiro (SP)"},
+    "sport": {"logo": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Sport_Club_do_Recife.svg", "colors": ["#EC1C24", "#000000"], "stadium": "Ilha do Retiro (PE)"},
+    "ceara": {"logo": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Cear%C3%A1_Sporting_Club_logo.svg", "colors": ["#000000", "#FFFFFF"], "stadium": "Arena Castelão (CE)"},
+    "goias": {"logo": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Goi%C3%A1s_Esporte_Clube_logo.svg", "colors": ["#006437", "#FFFFFF"], "stadium": "Serrinha (GO)"},
+    "america mineiro": {"logo": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Am%C3%A9rica_Futebol_Clube_%28MG%29_logo.svg", "colors": ["#01592E", "#000000"], "stadium": "Independência (MG)"},
+    "avai": {"logo": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Ava%C3%AD_Futebol_Clube_logo.svg", "colors": ["#005CA9", "#FFFFFF"], "stadium": "Ressacada (SC)"},
+    "coritiba": {"logo": "https://upload.wikimedia.org/wikipedia/commons/6/60/Coritiba_FBC_%282024%29_-_Crest.svg", "colors": ["#00522B", "#FFFFFF"], "stadium": "Couto Pereira (PR)"},
+    
+    # Fallback
+    "generic": {"logo": "https://cdn-icons-png.flaticon.com/512/53/53283.png", "colors": ["#333333", "#666666"], "stadium": "Genérico"}
+}
 
+# Função de busca ultra-robusta e DEBUG
+def get_team_assets(name, debug=False):
+    # Remove acentos e joga pra minúsculo
+    nfkd_form = unicodedata.normalize('NFKD', str(name))
+    clean_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)]).lower()
+    
+    # Dicionário de sinônimos
+    mapa = {
+        "atletico-mg": "atletico mineiro", "cam": "atletico mineiro", "galo": "atletico mineiro",
+        "athletico-pr": "athletico", "cap": "athletico", "furacao": "athletico", "athletico paranaense": "athletico",
+        "vasco da gama": "vasco", "gigante": "vasco",
+        "sport club do recife": "sport", "sport recife": "sport",
+        "sao paulo fc": "sao paulo",
+        "atletico-go": "atletico goianiense", "dragao": "atletico goianiense",
+        "bragantino": "bragantino", "red bull bragantino": "bragantino", "rb bragantino": "bragantino",
+        "america-mg": "america mineiro", "america mineiro": "generic"
+    }
+    
+    match_key = clean_name
+    if clean_name in mapa:
+        match_key = mapa[clean_name]
+    
+    if debug:
+        st.sidebar.markdown(f"**Debug Asset:** `{name}` -> `{clean_name}` -> Key: `{match_key}`")
+
+    for key in TEAMS_DB:
+        if key in match_key: # Procura a chave do DB dentro do nome normalizado
+            return TEAMS_DB[key]
+            
+    return TEAMS_DB["generic"]
+
+# ==============================================================================
+# 3. LÓGICA DE INTELIGÊNCIA TÁTICA (MODIFICADORES REAIS)
+# ==============================================================================
+def calcular_modificadores(dados_originais, config):
+    """
+    Aplica penalidades e bônus MATEMÁTICOS aos dados antes de enviar para a IA.
+    """
+    novos_dados = dados_originais.copy()
+    
+    # 1. FATOR CLIMA E GRAMADO
+    fator_tecnico = 1.0
+    if config['clima'] == "Chuva Intensa / Tempestade":
+        fator_tecnico -= 0.15
+    if config['gramado'] == "Ruim / Irregular":
+        fator_tecnico -= 0.20
+    if config['clima'] == "Calor Extremo (40ºC)":
+        novos_dados['idade_media_titular_mandante'] += 3
+        novos_dados['idade_media_titular_visitante'] += 3
+
+    if novos_dados['valor_equipe_titular_mandante'] > novos_dados['valor_equipe_titular_visitante']:
+        novos_dados['valor_equipe_titular_mandante'] *= fator_tecnico
+    else:
+        novos_dados['valor_equipe_titular_visitante'] *= fator_tecnico
+
+    # 2. FATOR HUMANO
+    if config['arbitragem'] == "Caseiro (Pressionável)":
+        novos_dados['publico_max'] *= 1.5
+    elif config['arbitragem'] == "Rigoroso (Visitante Protegido)":
+        novos_dados['publico_max'] *= 0.7
+
+    # 3. CONTEXTO DO JOGO
+    if config['tipo_jogo'] == "Final de Campeonato":
+        novos_dados['rodada'] = 38
+    elif config['tipo_jogo'] == "Clássico Estadual":
+        media = (novos_dados['valor_equipe_titular_mandante'] + novos_dados['valor_equipe_titular_visitante']) / 2
+        novos_dados['valor_equipe_titular_mandante'] = (novos_dados['valor_equipe_titular_mandante'] + media) / 2
+        novos_dados['valor_equipe_titular_visitante'] = (novos_dados['valor_equipe_titular_visitante'] + media) / 2
+
+    # 4. DESFALQUES
+    if config['desfalques'] == "Principal Craque Fora":
+        novos_dados['valor_equipe_titular_mandante'] *= 0.70
+
+    return novos_dados
+
+def gerar_narrativa_premium(probs, t_home, t_away, config, dados_finais):
+    p_h = probs['mandante']
+    p_a = probs['visitante']
+    diff = p_h - p_a
+    
+    res = {"titulo": "", "texto": "", "cor": ""}
+    motivos = []
+
+    if diff > 0.10:
+        res['titulo'] = f"VITÓRIA PROVÁVEL DO {t_home.upper()}"
+        res['cor'] = "#00FF00"
+    elif diff < -0.10:
+        res['titulo'] = f"VITÓRIA PROVÁVEL DO {t_away.upper()}"
+        res['cor'] = "#FF0055"
+    elif diff > 0:
+        res['titulo'] = f"LEVE VANTAGEM PARA O {t_home.upper()}"
+        res['cor'] = "#CCFF00"
+    else:
+        res['titulo'] = "JOGO TRUNCADO / ALTO RISCO DE EMPATE"
+        res['cor'] = "#FFAA00"
+
+    val_diff = dados_finais['valor_equipe_titular_mandante'] - dados_finais['valor_equipe_titular_visitante']
+    if abs(val_diff) > 50_000_000:
+        rico = t_home if val_diff > 0 else t_away
+        motivos.append(f"💎 **Abismo Técnico:** O elenco do {rico} vale muito mais (R$ {abs(val_diff)/1_000_000:.0f}M a mais), garantindo superioridade individual.")
+
+    if config['clima'] == "Chuva Intensa / Tempestade":
+        motivos.append("🌧️ **Efeito Chuva:** O gramado pesado nivelou o jogo por baixo, reduzindo a vantagem técnica.")
+    elif config['clima'] == "Calor Extremo (40ºC)":
+        motivos.append("☀️ **Desgaste Físico:** O calor extremo penalizou a intensidade, aumentando a chance de gols no final.")
+
+    if config['arbitragem'] == "Caseiro (Pressionável)" and dados_finais['publico_max'] > 40000:
+        motivos.append(f"📢 **Pressão Total:** A combinação de estádio lotado com arbitragem caseira aumentou a probabilidade do mandante.")
+    
+    if config['tipo_jogo'] == "Clássico Estadual" and abs(diff) < 0.1:
+        motivos.append("⚔️ **Fator Clássico:** A rivalidade histórica anulou as diferenças financeiras, criando um cenário de puro equilíbrio emocional.")
+        
+    if config['desfalques'] == "Principal Craque Fora":
+        motivos.append(f"🚑 **Desfalque de Peso:** A ausência do craque do {t_home} reduziu drasticamente o poder ofensivo.")
+
+    if not motivos:
+        motivos.append("A IA identificou um equilíbrio de forças onde detalhes táticos decidirão o placar.")
+
+    res['texto'] = "\n\n".join(motivos)
+    return res
+
+# ==============================================================================
+# 4. ENGINE DE DADOS (CONEXÃO BACKEND)
+# ==============================================================================
 @st.cache_data
-def get_times():
+def get_times_list():
     try:
         resp = requests.get(f"{API_URL}/times")
-        resp.raise_for_status()
-        return resp.json()["times"]
-    except requests.exceptions.ConnectionError:
-        st.error(f"❌ Erro de Conexão: Não foi possível conectar-se à API em {API_URL}. Verifique se o backend está rodando.")
-        return ["Erro de Conexão"]
+        return sorted(resp.json()["times"])
+    except:
+        return []
 
 @st.cache_data
-def get_perfil_time(time: str):
+def get_history(t1, t2):
     try:
-        resp = requests.get(f"{API_URL}/perfil-time", params={"time": time})
-        resp.raise_for_status()
-        return resp.json()["perfil"]
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Erro ao buscar perfil do time {time}: {e}")
-        return {}
-
-def get_comparacao(time_a: str, time_b: str):
-    try:
-        resp = requests.get(
-            f"{API_URL}/comparar-times",
-            params={"time_a": time_a, "time_b": time_b},
-        )
-        resp.raise_for_status()
-        return resp.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Erro ao comparar times {time_a} vs {time_b}: {e}")
+        return requests.get(f"{API_URL}/comparar-times", params={"time_a": t1, "time_b": t2}).json()
+    except:
         return None
 
-def prever_partida(payload: dict):
-    try:
-        resp = requests.post(f"{API_URL}/prever", json=payload)
-        resp.raise_for_status()
-        return resp.json()["probabilidades"]
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Erro ao prever partida: {e}")
-        return None
+# ==============================================================================
+# 5. APLICAÇÃO PRINCIPAL (INTERFACE)
+# ==============================================================================
 
-# ========== Sidebar (Painel de Controle) ==========
+times_list = get_times_list()
 
-st.sidebar.markdown(f"## ⚙️ **Parâmetros da Análise**")
+# --- HEADER (STATUS E TÍTULO) ---
+c1, c2 = st.columns([0.8, 0.2])
+with c1:
+    st.markdown("# 🧠 IA FUTEBOL BRASIL PRO")
+    st.markdown("**SISTEMA PREDITIVO DE ALTA PERFORMANCE | 2025**")
+with c2:
+    if times_list:
+        st.markdown("<div style='text-align:right; color:#00FF00; font-weight:bold; font-size:1.2rem; padding:10px'>● ONLINE</div>", unsafe_allow_html=True)
+    else:
+        st.error("● OFFLINE")
+        st.stop()
 
-times = get_times()
-if "Erro de Conexão" in times:
-    st.sidebar.warning("⚠️ Seleção de times indisponível devido a erro de conexão com a API.")
-    time_a = "Time A (Indisponível)"
-    time_b = "Time B (Indisponível)"
-else:
-    time_a = st.sidebar.selectbox("**Time da Casa (Mandante)**", options=times, index=times.index("Flamengo") if "Flamengo" in times else 0)
-    time_b = st.sidebar.selectbox("**Time Visitante**", options=times, index=times.index("Palmeiras") if "Palmeiras" in times else 1)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📊 **Dados da Partida**")
-
-with st.sidebar.expander("Detalhes do Campeonato", expanded=False):
-    ano = st.number_input("Ano da Temporada", min_value=2003, max_value=2025, value=2024, help="Ano em que a partida será disputada ou foi simulada.")
-    rodada = st.number_input("Rodada do Campeonato", min_value=1, max_value=38, value=10, help="Número da rodada dentro do campeonato.")
-    publico_max = st.number_input("Capacidade do Estádio (Público Máx)", value=40000.0, step=1000.0, help="Capacidade máxima de público do estádio.")
-
-st.sidebar.markdown("**Posicionamento Atual:**")
-
-col_pos1, col_pos2 = st.sidebar.columns(2)
-with col_pos1:
-    col_mand = st.number_input(f"Pos. {time_a[:6]}", min_value=1, max_value=20, value=3, help=f"Ranking")
-with col_pos2:
-    col_visit = st.number_input(f"Pos. {time_b[:6]}", min_value=1, max_value=20, value=7, help=f"Ranking")
-
-st.sidebar.markdown("**Valor e Idade do Elenco:**")
-
-col_val1, col_val2 = st.sidebar.columns(2)
-with col_val1:
-    valor_mand = st.number_input(f"Valor {time_a[:8]} (M)", value=25.0, step=1.0, format="%.2f", help=f"Valor em milhões (R$)")
-with col_val2:
-    valor_visit = st.number_input(f"Valor {time_b[:8]} (M)", value=18.0, step=1.0, format="%.2f", help=f"Valor em milhões (R$)")
-
-col_age1, col_age2 = st.sidebar.columns(2)
-with col_age1:
-    idade_mand = st.number_input(f"Idade {time_a[:6]}", value=26.5, step=0.1, help=f"Média etária")
-with col_age2:
-    idade_visit = st.number_input(f"Idade {time_b[:6]}", value=27.1, step=0.1, help=f"Média etária")
-
-st.sidebar.markdown("---")
-if "Erro de Conexão" not in times:
-    btn_comparar = st.sidebar.button("Iniciar Análise Comparativa", use_container_width=True)
-    btn_prever = st.sidebar.button("Gerar Projeção de Resultado", use_container_width=True)
-else:
-    st.sidebar.button(" Iniciar Análise Comparativa", use_container_width=True, disabled=True)
-    st.sidebar.button(" Gerar Projeção de Resultado", use_container_width=True, disabled=True)
-
-# ========== Layout principal ==========
-
-st.markdown("### **Confronto em Destaque**")
-col_esq, col_meio, col_dir = st.columns([1, 0.3, 1])
-
-with col_esq:
-    st.markdown(f"<h3 style='text-align: left; color: {TEXT_LIGHT}; border-bottom: 4px solid {ACCENT_COLOR}; padding-bottom: 10px;'> {time_a}</h3>", unsafe_allow_html=True)
-
-with col_meio:
-    st.markdown(f"<h3 style='text-align: center; color: {ACCENT_CYAN}; font-size: 1.5em;'> vs </h3>", unsafe_allow_html=True)
-
-with col_dir:
-    st.markdown(f"<h3 style='text-align: right; color: {TEXT_LIGHT}; border-bottom: 4px solid {ACCENT_COLOR}; padding-bottom: 10px;'> {time_b}</h3>", unsafe_allow_html=True)
+# --- BARRA LATERAL PARA DEBUG ---
+st.sidebar.title("Configurações")
+debug_mode = st.sidebar.checkbox("🛠️ Modo Desenvolvedor (Debug)", value=False)
 
 st.markdown("---")
 
-if not btn_comparar and not btn_prever:
-    st.info(" Utilize o **Painel de Parâmetros** ao lado para configurar a análise ou previsão da partida.")
+# --- SELEÇÃO DE TIMES (HERO SECTION IMERSIVA) ---
+col_home, col_vs, col_away = st.columns([1, 0.2, 1])
 
-# ========== 1) Comparação de times ==========
+with col_home:
+    st.markdown("### MANDANTE")
+    idx_h = times_list.index("Flamengo") if "Flamengo" in times_list else 0
+    t_home = st.selectbox("Selecione Mandante", times_list, index=idx_h, key="sel_h", label_visibility="collapsed")
+    
+    # Busca Assets (Logo e Estádio Padrão)
+    assets_h = get_team_assets(t_home, debug=debug_mode)
+    
+    # SELETOR DE ESTÁDIO DO MANDANTE
+    # Pega o estádio padrão do time e permite trocar
+    default_stadium_h = assets_h.get('default_stadium', "Maracanã (RJ)")
+    # Se o padrão não estiver na lista de estádios, usa genérico
+    if default_stadium_h not in STADIUMS_DB: default_stadium_h = "Genérico"
+    
+    st.markdown("**Local do Jogo:**")
+    selected_stadium_name = st.selectbox("Estádio", list(STADIUMS_DB.keys()), index=list(STADIUMS_DB.keys()).index(default_stadium_h), label_visibility="collapsed")
+    
+    # Pega dados do estádio selecionado
+    stadium_data_h = STADIUMS_DB[selected_stadium_name]
+    stadium_img_url_h = stadium_data_h['img']
+    stadium_capacity_h = stadium_data_h['capacity']
 
-if btn_comparar and "Erro de Conexão" not in times:
-    comparacao = get_comparacao(time_a, time_b)
-    if comparacao:
-        stats = comparacao["estatisticas"]
+    # Renderiza Card
+    st.markdown(f"""
+    <div class="hero-card" style="background-image: url('{stadium_img_url_h}'); border-color: {assets_h['colors'][0]}">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <img src="{assets_h['logo']}" class="team-logo-hero">
+            <h1 style="margin:0; text-shadow: 0 0 20px black; font-size: 2.8rem; color: white;">{t_home}</h1>
+            <div class="stadium-badge">🏟️ {selected_stadium_name}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        st.markdown(f"## 📊 **Relatório Tático de Confronto Direto**")
-        st.markdown(f"O histórico geral registra **{comparacao['empates_totais']}** empates em partidas anteriores entre as equipes.")
+with col_vs:
+    st.markdown("<br><br><br><br><h1 style='text-align:center; font-size: 4rem; opacity: 0.5'>X</h1>", unsafe_allow_html=True)
 
-        with st.expander("📈 **Estatísticas Gerais da Carreira**", expanded=True):
-            col1, col2 = st.columns(2)
+with col_away:
+    st.markdown("### VISITANTE")
+    idx_a = times_list.index("Palmeiras") if "Palmeiras" in times_list else 1
+    t_away = st.selectbox("Selecione Visitante", times_list, index=idx_a, key="sel_a", label_visibility="collapsed")
+    
+    # Busca Assets Visitante
+    assets_a = get_team_assets(t_away, debug=debug_mode)
+    
+    # Para o visitante, usamos o estádio padrão dele APENAS PARA A FOTO DE FUNDO DO CARD DELE
+    # Não afeta o local do jogo (que é o do mandante)
+    default_stadium_a = assets_a.get('default_stadium', "Genérico")
+    if default_stadium_a not in STADIUMS_DB: default_stadium_a = "Genérico"
+    stadium_data_a = STADIUMS_DB[default_stadium_a]
+    stadium_img_url_a = stadium_data_a['img']
+    
+    st.markdown("<br><br>", unsafe_allow_html=True) # Espaçamento para alinhar com o seletor extra do mandante
+    st.markdown(f"""
+    <div class="hero-card" style="background-image: url('{stadium_img_url_a}'); border-color: {assets_a['colors'][0]}">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <img src="{assets_a['logo']}" class="team-logo-hero">
+            <h1 style="margin:0; text-shadow: 0 0 20px black; font-size: 2.8rem; color: white;">{t_away}</h1>
+            <div class="stadium-badge">✈️ Visitante</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-            with col1:
-                st.markdown(f"### **Dados de Performance - {time_a}**")
-                st.metric("Total de Jogos", stats[time_a]["jogos"])
-                st.metric("Vitórias", stats[time_a]["vitorias"])
-                st.metric("Média de Gols Pró", f"{stats[time_a]['gols_pro']:.2f}", delta_color="normal")
-                st.metric("Média de Gols Contra", f"{stats[time_a]['gols_contra']:.2f}", delta_color="inverse")
+st.markdown("<br>", unsafe_allow_html=True)
 
-            with col2:
-                st.markdown(f"### **Dados de Performance - {time_b}**")
-                st.metric("Total de Jogos", stats[time_b]["jogos"])
-                st.metric("Vitórias", stats[time_b]["vitorias"])
-                st.metric("Média de Gols Pró", f"{stats[time_b]['gols_pro']:.2f}", delta_color="normal")
-                st.metric("Média de Gols Contra", f"{stats[time_b]['gols_contra']:.2f}", delta_color="inverse")
+# --- SISTEMA DE ABAS (SIMULADOR / ESTATÍSTICAS) ---
+tab_sim, tab_stat, tab_metodo = st.tabs(["🎮 SIMULADOR DE CENÁRIOS", "📊 ESTATÍSTICAS HISTÓRICAS", "🧠 NEURAL ENGINE"])
 
-        st.markdown("---")
+# >>> ABA 1: O SIMULADOR TÁTICO
+with tab_sim:
+    # Layout de Controle
+    c_input_env, c_input_team, c_exec = st.columns([1, 1, 1.2])
+    
+    with c_input_env:
+        st.markdown('<div class="control-panel">', unsafe_allow_html=True)
+        st.markdown("### 1. AMBIENTE & CLIMA")
+        i_jogo = st.selectbox("Tipo de Jogo", ["Rodada Comum", "Clássico Estadual", "Final de Campeonato", "Jogo Decisivo (G4/Z4)"])
+        i_clima = st.selectbox("Condição do Tempo", ["Tempo Bom (Ideal)", "Chuva Intensa / Tempestade", "Calor Extremo (40ºC)", "Frio/Neve"])
+        i_gramado = st.selectbox("Estado do Gramado", ["Tapete (Perfeito)", "Ruim / Irregular", "Sintético"])
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with st.expander(" **Dinâmica de Gols (Média por Partida)**", expanded=True):
-            st.markdown(f"### 🎯 Gols Marcados vs Sofridos")
-            df_gols = pd.DataFrame({
-                "Time": [time_a, time_a, time_b, time_b],
-                "Tipo de Gol": ["Pró", "Contra", "Pró", "Contra"],
-                "Valor": [
-                    stats[time_a]["gols_pro"],
-                    stats[time_a]["gols_contra"],
-                    stats[time_b]["gols_pro"],
-                    stats[time_b]["gols_contra"],
-                ]
+    with c_input_team:
+        st.markdown('<div class="control-panel">', unsafe_allow_html=True)
+        st.markdown("### 2. FATOR HUMANO")
+        
+        # Slider de Público usa a capacidade do estádio selecionado no HERO
+        i_publico_label = st.select_slider("Ocupação do Estádio", ["Portões Fechados", "Público Baixo", "Médio", "Cheio", "Caldeirão (Lotado)"])
+        
+        # Calcula número para mostrar ao usuário
+        mapa_pub_visual = {"Portões Fechados": 0, "Público Baixo": 0.2, "Médio": 0.5, "Cheio": 0.8, "Caldeirão (Lotado)": 1.0}
+        publico_real_show = int(stadium_capacity_h * mapa_pub_visual[i_publico_label])
+        
+        st.caption(f"👥 Público Estimado: **{publico_real_show:,}** (Base: {selected_stadium_name})")
+
+        i_juiz = st.selectbox("Arbitragem", ["Neutro (Padrão)", "Caseiro (Pressionável)", "Rigoroso (Visitante Protegido)", "Liberal (Deixa Jogar)"])
+        i_desfalque = st.selectbox("Desfalques Mandante", ["Elenco Completo", "Principal Craque Fora", "Vários Titulares Fora"])
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with c_exec:
+        st.markdown("### 3. FORÇA DOS ELENCOS")
+        st.caption("Ajuste o Momento Financeiro/Técnico Atual:")
+        val_h = st.select_slider(f"💰 Elenco {t_home}", ["Crise", "Base", "Médio", "Forte", "Galáctico"], value="Forte")
+        val_a = st.select_slider(f"💰 Elenco {t_away}", ["Crise", "Base", "Médio", "Forte", "Galáctico"], value="Forte")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("🚀 CALCULAR PREVISÃO FINAL"):
+            with st.spinner(f"Simulando partida no {selected_stadium_name}... Aplicando {i_clima} e {i_juiz}..."):
+                time.sleep(1.2)
+                
+                # 1. Tradução dos Sliders
+                mapa_val = {"Crise": 5e6, "Base": 20e6, "Médio": 60e6, "Forte": 120e6, "Galáctico": 250e6}
+                publico_final = float(publico_real_show)
+                
+                # Rodada Base
+                rodada_base = 20
+                if "Final" in i_jogo: rodada_base = 38
+                
+                # 2. Montagem do Payload Bruto
+                raw_payload = {
+                    "ano_campeonato": 2025,
+                    "rodada": rodada_base,
+                    "colocacao_mandante": 3,
+                    "colocacao_visitante": 4,
+                    "valor_equipe_titular_mandante": mapa_val[val_h],
+                    "valor_equipe_titular_visitante": mapa_val[val_a],
+                    "idade_media_titular_mandante": 27.5,
+                    "idade_media_titular_visitante": 27.5,
+                    "publico_max": publico_final
+                }
+                
+                # 3. Configuração para Modificadores
+                config_vars = {
+                    "clima": i_clima, "gramado": i_gramado, 
+                    "arbitragem": i_juiz, "tipo_jogo": i_jogo, 
+                    "desfalques": i_desfalque
+                }
+                
+                # 4. APLICAÇÃO DA INTELIGÊNCIA TÁTICA
+                final_payload = calcular_modificadores(raw_payload, config_vars)
+                
+                # 5. Chamada à API
+                try:
+                    resp = requests.post(f"{API_URL}/prever", json=final_payload)
+                    resultado = resp.json()["probabilidades"]
+                    
+                    st.session_state['resultado'] = resultado
+                    st.session_state['config'] = config_vars
+                    st.session_state['payload'] = final_payload
+                    
+                except Exception as e:
+                    st.error(f"Erro de conexão com o cérebro da IA: {e}")
+
+        # EXIBIÇÃO DO RESULTADO (VEREDITO)
+        if 'resultado' in st.session_state:
+            probs = st.session_state['resultado']
+            config = st.session_state['config']
+            dados = st.session_state['payload']
+            
+            narrativa = gerar_narrativa_premium(probs, t_home, t_away, config, dados)
+            
+            st.markdown(f"""
+            <div class="veredito-box" style="border-color: {narrativa['cor']}">
+                <h2 style="margin:0; color:{narrativa['cor']}; text-shadow: 0 0 15px {narrativa['cor']}; letter-spacing: 2px;">{narrativa['titulo']}</h2>
+                <div style="margin-top:20px; font-size:1.2rem; line-height:1.6; color:#EEE">
+                    {narrativa['texto'].replace('\n', '<br>')}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            df_chart = pd.DataFrame({
+                "Time": [t_home, "Empate", t_away],
+                "Probabilidade": [probs['mandante'], probs['empate'], probs['visitante']],
+                "Cor": [assets_h['colors'][0], "#888888", assets_a['colors'][0]]
             })
             
-            fig_bar = px.bar(
-                df_gols, 
-                x="Time", 
-                y="Valor", 
-                color="Tipo de Gol", 
-                barmode="group", 
-                text_auto=".2f",
-                title="Média de Gols por Tipo",
-                color_discrete_map={
-                    "Pró": ACCENT_COLOR, 
-                    "Contra": ACCENT_PINK
-                },
-                template="plotly"
-            )
-            fig_bar.update_layout(
-                paper_bgcolor='rgba(248, 250, 252, 0)', 
-                plot_bgcolor='rgba(248, 250, 252, 0)',
-                font=dict(color=TEXT_LIGHT, size=12, family="Inter"),
-                legend_title_text='Tipo de Gol',
-                hovermode='x unified',
-                margin=dict(l=0, r=0, t=40, b=0),
-                xaxis=dict(showgrid=False),
-                yaxis=dict(gridcolor='rgba(0, 255, 65, 0.12)')
-            )
-            fig_bar.update_traces(
-                marker=dict(line=dict(width=2, color='rgba(255,255,255,0.6)')),
-                hovertemplate='<b>%{x}</b><br>%{fullData.name}: %{y:.2f}<extra></extra>'
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-        st.markdown("---")
-
-        with st.expander(" **Radar de Atributos Táticos**", expanded=True):
-            st.markdown("### 📊 Comparativo de Perfil de Jogo")
-
-            perfil_a = get_perfil_time(time_a)
-            perfil_b = get_perfil_time(time_b)
+            fig = px.bar(df_chart, x="Probabilidade", y="Time", orientation='h', text_auto='.1%', 
+                         color="Time", color_discrete_sequence=df_chart["Cor"].tolist())
             
-            if perfil_a and perfil_b:
-                campos = [
-                    "gols_pro", "gols_contra", "chutes_pro", "escanteios_pro",
-                    "faltas_pro", "defesas_pro", "taxa_vitorias", "taxa_empates", "taxa_derrotas",
-                ]
+            fig.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='white', size=16),
+                showlegend=False,
+                margin=dict(l=0, r=0, t=20, b=0),
+                height=300,
+                xaxis=dict(showgrid=False, range=[0, 1])
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-                df_radar = pd.DataFrame({
-                    "Métrica": campos,
-                    time_a: [perfil_a.get(c, 0) for c in campos],
-                    time_b: [perfil_b.get(c, 0) for c in campos],
-                })
-
-                for col in [time_a, time_b]:
-                    max_val = df_radar[col].max()
-                    if max_val > 0:
-                        df_radar[col] = df_radar[col] / max_val
-                
-                melted_df = df_radar.melt(id_vars="Métrica", var_name="Time", value_name="Valor")
-                
-                fig_radar = px.line_polar(
-                    melted_df,
-                    r="Valor",
-                    theta="Métrica",
-                    color="Time",
-                    line_close=True,
-                    color_discrete_map={
-                        time_a: ACCENT_COLOR,
-                        time_b: ACCENT_CYAN,
-                    },
-                    template="plotly",
-                    title="Desempenho Relativo por Métrica"
-                )
-                fig_radar.update_traces(
-                    fill="toself", 
-                    opacity=0.35, 
-                    line=dict(width=3),
-                    hovertemplate='<b>%{theta}</b><br>%{fullData.name}<br>Valor: %{r:.2f}<extra></extra>'
-                )
-                fig_radar.update_layout(
-                    paper_bgcolor='rgba(248, 250, 252, 0)', 
-                    plot_bgcolor='rgba(248, 250, 252, 0)',
-                    font=dict(color=TEXT_LIGHT, family="Inter"),
-                    polar=dict(
-                        radialaxis=dict(
-                            visible=True, 
-                            range=[0, 1], 
-                            showticklabels=True,
-                            gridcolor='rgba(0, 255, 65, 0.15)',
-                            tickcolor=ACCENT_COLOR
-                        ),
-                        angularaxis=dict(
-                            rotation=90, 
-                            direction='clockwise', 
-                            tickfont=dict(size=11, color=TEXT_LIGHT)
-                        ),
-                        bgcolor='rgba(0, 255, 65, 0.02)'
-                    ),
-                    margin=dict(l=80, r=80, t=80, b=80)
-                )
-                st.plotly_chart(fig_radar, use_container_width=True)
-            else:
-                st.warning("⚠️ Não foi possível carregar o perfil completo de um ou ambos os times para o radar.")
-
-# ========== 2) Previsão de resultado ==========
-
-if btn_prever and "Erro de Conexão" not in times:
-    payload = {
-        "ano_campeonato": int(ano),
-        "rodada": int(rodada),
-        "colocacao_mandante": float(col_mand),
-        "colocacao_visitante": float(col_visit),
-        "valor_equipe_titular_mandante": float(valor_mand * 1_000_000),
-        "valor_equipe_titular_visitante": float(valor_visit * 1_000_000),
-        "idade_media_titular_mandante": float(idade_mand),
-        "idade_media_titular_visitante": float(idade_visit),
-        "publico_max": float(publico_max),
-    }
-
-    probs = prever_partida(payload)
-
-    if probs:
-        st.markdown(f"## **Projeção Preditiva: Resultado da Partida**")
+# >>> ABA 2: ESTATÍSTICAS HISTÓRICAS
+with tab_stat:
+    if st.button("📥 CARREGAR DOSSIÊ DE CONFRONTO (HISTÓRICO)"):
+        dados_hist = get_history(t_home, t_away)
         
-        with st.container(border=True):
-            st.markdown(f"### 📈 **Probabilidades Calculadas pela IA**")
-            st.markdown(f"**Mandante:** **{time_a}** | **Visitante:** **{time_b}**")
-
-            col_p1, col_p2, col_p3 = st.columns(3)
+        if dados_hist:
+            stats = dados_hist['estatisticas']
+            st.markdown("### 📜 Histórico Recente (Base 2003-2024)")
             
-            col_p1.metric(f"Vitória {time_a}", f"{probs['mandante'] * 100:.1f}%", delta_color="normal")
-            col_p2.metric("Empate", f"{probs['empate'] * 100:.1f}%", delta_color="off")
-            col_p3.metric(f"Vitória {time_b}", f"{probs['visitante'] * 100:.1f}%", delta_color="inverse")
+            col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+            col_kpi1.metric(f"Vitórias {t_home}", stats[t_home]['vitorias'], delta="Mandante")
+            col_kpi2.metric("Empates", dados_hist['empates_totais'])
+            col_kpi3.metric(f"Vitórias {t_away}", stats[t_away]['vitorias'], delta="Visitante", delta_color="inverse")
+            
+            st.markdown("---")
+            
+            # Gráfico Radar
+            c_radar, c_table = st.columns([1, 1])
+            
+            with c_radar:
+                st.markdown("### 🕸️ Comparativo de DNA")
+                cat = ['Gols Pró', 'Gols Contra', 'Vitórias', 'Jogos']
+                fig_r = go.Figure()
+                
+                fig_r.add_trace(go.Scatterpolar(
+                    r=[stats[t_home]['gols_pro'], stats[t_home]['gols_contra'], stats[t_home]['vitorias']/10, 1],
+                    theta=cat, fill='toself', name=t_home, line_color=assets_h['colors'][0]
+                ))
+                fig_r.add_trace(go.Scatterpolar(
+                    r=[stats[t_away]['gols_pro'], stats[t_away]['gols_contra'], stats[t_away]['vitorias']/10, 1],
+                    theta=cat, fill='toself', name=t_away, line_color=assets_a['colors'][0]
+                ))
+                fig_r.update_layout(
+                    polar=dict(
+                        radialaxis=dict(visible=True, showticklabels=False),
+                        bgcolor='rgba(0,0,0,0.3)'
+                    ), 
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    font=dict(color='white'),
+                    margin=dict(l=40, r=40, t=40, b=40)
+                )
+                st.plotly_chart(fig_r, use_container_width=True)
+            
+            with c_table:
+                st.markdown("### 📋 Tabela Detalhada")
+                df_stats = pd.DataFrame({
+                    "Métrica": ["Gols Marcados", "Gols Sofridos", "Saldo de Gols", "Derrotas"],
+                    t_home: [
+                        f"{stats[t_home]['gols_pro']:.2f}", 
+                        f"{stats[t_home]['gols_contra']:.2f}",
+                        f"{stats[t_home]['gols_pro'] - stats[t_home]['gols_contra']:.2f}",
+                        stats[t_home]['derrotas']
+                    ],
+                    t_away: [
+                        f"{stats[t_away]['gols_pro']:.2f}", 
+                        f"{stats[t_away]['gols_contra']:.2f}",
+                        f"{stats[t_away]['gols_pro'] - stats[t_away]['gols_contra']:.2f}",
+                        stats[t_away]['derrotas']
+                    ]
+                })
+                st.dataframe(df_stats, use_container_width=True, hide_index=True)
+            
+        else:
+            st.warning("Dados históricos insuficientes para este confronto.")
 
-        df_probs = pd.DataFrame({
-            "Resultado": [f"Vitória {time_a}", "Empate", f"Vitória {time_b}"],
-            "Probabilidade": [
-                probs["mandante"],
-                probs["empate"],
-                probs["visitante"],
-            ],
-        })
-
-        fig_prob = px.bar(
-            df_probs, 
-            x="Resultado", 
-            y="Probabilidade", 
-            text_auto=".1%",
-            title="Distribuição de Probabilidades do Modelo Preditivo",
-            color="Resultado",
-            color_discrete_map={
-                f"Vitória {time_a}": ACCENT_COLOR,
-                "Empate": ACCENT_CYAN,
-                f"Vitória {time_b}": ACCENT_PINK,
-            },
-            template="plotly"
-        )
-        fig_prob.update_yaxes(
-            tickformat=".0%", 
-            range=[0, df_probs['Probabilidade'].max() * 1.2 if df_probs['Probabilidade'].max() > 0.0 else 1.0],
-            gridcolor='rgba(0, 255, 65, 0.12)'
-        )
-        fig_prob.update_xaxes(showgrid=False)
-        fig_prob.update_layout(
-            paper_bgcolor='rgba(248, 250, 252, 0)', 
-            plot_bgcolor='rgba(248, 250, 252, 0)',
-            font=dict(color=TEXT_LIGHT, family="Inter"),
-            hovermode='x unified',
-            margin=dict(l=0, r=0, t=40, b=0),
-        )
-        fig_prob.update_traces(
-            marker=dict(line=dict(width=2, color='rgba(255,255,255,0.6)')),
-            hovertemplate='<b>%{x}</b><br>Probabilidade: %{y:.1%}<extra></extra>'
-        )
-        st.plotly_chart(fig_prob, use_container_width=True)
+# >>> ABA 3: METODOLOGIA
+with tab_metodo:
+    st.markdown("### 🧠 Como Funciona a Neural Engine?")
+    st.info("""
+    Este sistema utiliza um modelo de **Machine Learning (Random Forest)** treinado com mais de 7.000 partidas do Brasileirão (2003-2024).
+    
+    A "Camada Tática" (Frontend) atua como um pré-processador inteligente:
+    1.  **Inputs do Usuário:** Clima, Juiz, Público.
+    2.  **Tradução Matemática:** O código converte "Chuva" em penalidade técnica (-15%).
+    3.  **Predição:** O modelo calcula a probabilidade com os dados ajustados.
+    4.  **Narrativa:** O sistema gera texto explicativo baseado nas variáveis alteradas.
+    """)
