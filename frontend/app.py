@@ -20,151 +20,209 @@ API_URL = "http://127.0.0.1:8000"
 
 # CSS Profissional: Glassmorphism, Fontes Tecnológicas e Hero Cards Dinâmicos
 st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;600&display=swap');
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
 
-    /* Fundo Global com Gradiente Profundo */
-    .stApp {
-        background-color: #0b0c10;
-        background-image: radial-gradient(circle at 50% 0%, #1f2833 0%, #0b0c10 80%);
-        color: #ffffff;
-        font-family: 'Inter', sans-serif;
-    }
+/* ======================== */
+/*   ESTILO GLOBAL FUTURISTA */
+/* ======================== */
 
-    /* Títulos */
-    h1, h2, h3 {
-        font-family: 'Rajdhani', sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
+.stApp {
+    background: radial-gradient(circle at 20% 20%, #0f1117 0%, #050608 100%);
+    color: #d9d9d9 !important;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.3px;
+}
 
-    /* --- HERO CARD (O ESTÁDIO) --- */
-    .hero-card {
-        position: relative;
-        height: 400px;
-        border-radius: 24px;
-        overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-        text-align: center;
-        transition: all 0.5s ease;
-        background-size: cover;
-        background-position: center;
-    }
+/* TÍTULOS HOLOGRÁFICOS */
+h1, h2, h3 {
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    color: #00FF00;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px #00FF0055, 0 0 25px #00FF0033;
+}
+
+/* ======================== */
+/*     HERO CARD 2.0        */
+/* ======================== */
+
+.hero-card {
+    position: relative;
+    height: 420px;
+    border-radius: 22px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(0,255,255,0.08);
+    box-shadow: 0 0 25px #00FF0022, inset 0 0 25px #00FF0011;
+    transition: 0.45s ease-in-out;
+}
+
+.hero-card:hover {
+    transform: perspective(800px) translateY(-6px) rotateX(3deg);
+    box-shadow: 0 0 40px #00FF0055, inset 0 0 40px #00FF0022;
+    border-color: #00FF0066;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(5,10,15,0.95));
+    backdrop-filter: blur(2px);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding-bottom: 35px;
+    text-align: center;
+}
+
+.team-logo-hero {
+    width: 185px;
+    height: 185px;
+    margin-top:50px;
+    filter: drop-shadow(0 0 25px rgba(0,255,255,0.55));
+    transition: 0.4s cubic-bezier(.19,1,.22,1);
+}
+
+.team-logo-hero:hover {
+    transform: scale(1.1) rotate(2deg);
+}
+
+/* BADGE TECNOLÓGICA */
+.stadium-badge {
+    display: inline-block;
+    padding: 8px 22px;
+    font-family: 'Orbitron';
+    font-size: 0.9rem;
+    color: #00FF00;
+    border: 1px solid #00FF0044;
+    border-radius: 30px;
+    background: rgba(0, 255, 255, 0.07);
+    box-shadow: 0 0 15px #00FF0033;
+    backdrop-filter: blur(6px);
+}
+
+/* ======================== */
+/*   PAINEL DE CONTROLE     */
+/* ======================== */
+
+.control-panel {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 24px;
+    border-radius: 18px;
+    border: 1px solid rgba(0,255,255,0.07);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 0 25px #00FF0015;
+}
+
+/* ------------------------ */
+/*    BOTÃO NEON FUTURISTA */
+/* ------------------------ */
+
+.stButton > button {
+    width: 100%;
+    padding: 18px 14px;
+    font-size: 1.4rem;
+    font-family: 'Orbitron';
+    letter-spacing: 2px;
+    font-weight: 700;
+
+    color: #000;
+    background: linear-gradient(90deg, #00FF00, #007bff);
     
-    .hero-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
-        border-color: rgba(255,255,255,0.4);
-    }
-
-    /* Camada escura sobre a foto do estádio para ler o texto */
-    .hero-overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%);
-        z-index: 1;
-    }
-
-    .hero-content {
-        position: relative;
-        z-index: 2;
-        padding-bottom: 40px;
-        width: 100%;
-    }
-
-    .team-logo-hero {
-        width: 180px;
-        height: 180px;
-        filter: drop-shadow(0 0 30px rgba(0,0,0,0.7));
-        margin-bottom: 15px;
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .team-logo-hero:hover { transform: scale(1.1); }
-
-    .stadium-badge {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        padding: 8px 20px;
-        border-radius: 30px;
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        display: inline-block;
-        margin-top: 15px;
-        color: #ddd;
-    }
-
-    /* --- PAINEL DE CONTROLE (GLASSMORPHISM) --- */
-    .control-panel {
-        background: rgba(30, 35, 45, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        padding: 25px;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        margin-bottom: 20px;
-    }
-
-    /* Botão Neon "Matador" */
-    .stButton > button {
-        background: linear-gradient(90deg, #00F260 0%, #0575E6 100%);
-        color: #fff;
-        font-family: 'Rajdhani', sans-serif;
-        font-weight: 800;
-        font-size: 1.5rem;
-        padding: 20px;
-        border: none;
-        border-radius: 12px;
-        text-transform: uppercase;
-        width: 100%;
-        box-shadow: 0 0 30px rgba(5, 117, 230, 0.5);
-        transition: all 0.4s ease;
-        letter-spacing: 2px;
-    }
+    border: none;
+    border-radius: 14px;
     
-    .stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 60px rgba(5, 117, 230, 0.8);
-        color: #fff;
-    }
+    text-transform: uppercase;
+    box-shadow: 0 0 25px #00FF0066, 0 0 50px #007bff33;
+    transition: 0.3s ease;
+}
 
-    /* Veredito Box (Resultado) */
-    .veredito-box {
-        background: rgba(20, 20, 30, 0.9);
-        border-radius: 16px;
-        padding: 30px;
-        border-left: 10px solid; /* Cor dinâmica via Python */
-        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        margin-top: 20px;
-        animation: slideUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
-    }
+.stButton > button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 40px #00FF00aa, 0 0 75px #007bffaa;
+}
 
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(40px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Ajuste de Métricas e Textos */
-    [data-testid="stMetricValue"] {
-        font-family: 'Rajdhani';
-        font-size: 2.8rem;
-        text-shadow: 0 0 20px rgba(255,255,255,0.2);
-    }
-    
-    /* Inputs customizados */
-    .stSelectbox label, .stSlider label {
-        color: #66fcf1 !important;
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    </style>
+/* ======================== */
+/*      VEREDITO BOX        */
+/* ======================== */
+
+.veredito-box {
+    margin-top: 20px;
+    padding: 32px;
+    background: rgba(0, 10, 20, 0.85);
+    border-left: 10px solid; /* Dinâmico */
+    border-radius: 18px;
+    box-shadow: 0 0 25px #00FF0022;
+    animation: slideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ======================== */
+/*   MÉTRICAS / NÚMEROS     */
+/* ======================== */
+
+[data-testid="stMetricValue"] {
+    font-family: "Orbitron";
+    font-size: 2.8rem;
+    color: #00FF00;
+    text-shadow: 0 0 20px #00FF0066;
+}
+
+/* ======================== */
+/*      INPUTS CUSTOM       */
+/* ======================== */
+
+.stSelectbox label,
+.stSlider label,
+.stNumberInput label,
+.stTextInput label {
+    color: #00FF00 !important;
+    font-family: 'Orbitron';
+    letter-spacing: 1px;
+    font-size: 0.95rem;
+}
+
+.stSelectbox div,
+.stSlider div,
+.stNumberInput div,
+.stTextInput input {
+    color: #e7e7e7 !important;
+}
+
+/* Select / Input Glass */
+.stSelectbox, .stNumberInput, .stTextInput {
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important;
+    padding: 6px;
+    border: 1px solid rgba(0,255,255,0.15) !important;
+}
+
+/* Remove fundo branco do Streamlit */
+.css-1d391kg, .css-1n76uvr, .block-container {
+    background: transparent !important;
+}
+
+[data-testid="stMetricValue"] {
+    font-family: "Orbitron";
+    font-size: 2.8rem;
+    color: white;
+    text-shadow: 0 0 20px #00FF0066;
+}
+            
+.control-panel {
+    margin-bottom: 25px;
+}
+        
+</style>
+
 """, unsafe_allow_html=True)
 
 # ==============================================================================
@@ -384,7 +442,7 @@ with c1:
     st.markdown("**SISTEMA PREDITIVO DE ALTA PERFORMANCE | 2025**")
 with c2:
     if times_list:
-        st.markdown("<div style='text-align:right; color:#00FF00; font-weight:bold; font-size:1.2rem; padding:10px'>● ONLINE</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:right; color:white; font-weight:bold; font-size:1.2rem; padding:10px'>● ONLINE</div>", unsafe_allow_html=True)
     else:
         st.error("● OFFLINE")
         st.stop()
@@ -433,7 +491,7 @@ with col_home:
     """, unsafe_allow_html=True)
 
 with col_vs:
-    st.markdown("<br><br><br><br><h1 style='text-align:center; font-size: 4rem; opacity: 0.5'>X</h1>", unsafe_allow_html=True)
+    st.markdown("<br><br><br><br><h1 style='text-align:center; font-size: 3rem; opacity: 0.5; margin-top: 300px; margin-left:10px;' > VS</h1>", unsafe_allow_html=True)
 
 with col_away:
     st.markdown("### VISITANTE")
@@ -450,7 +508,7 @@ with col_away:
     stadium_data_a = STADIUMS_DB[default_stadium_a]
     stadium_img_url_a = stadium_data_a['img']
     
-    st.markdown("<br><br>", unsafe_allow_html=True) # Espaçamento para alinhar com o seletor extra do mandante
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True) # Espaçamento para alinhar com o seletor extra do mandante
     st.markdown(f"""
     <div class="hero-card" style="background-image: url('{stadium_img_url_a}'); border-color: {assets_a['colors'][0]}">
         <div class="hero-overlay"></div>
@@ -498,6 +556,7 @@ with tab_sim:
         st.markdown('</div>', unsafe_allow_html=True)
 
     with c_exec:
+        st.markdown('<div class="control-panel">', unsafe_allow_html=True)
         st.markdown("### 3. FORÇA DOS ELENCOS")
         st.caption("Ajuste o Momento Financeiro/Técnico Atual:")
         val_h = st.select_slider(f"💰 Elenco {t_home}", ["Crise", "Base", "Médio", "Forte", "Galáctico"], value="Forte")
@@ -559,35 +618,71 @@ with tab_sim:
             dados = st.session_state['payload']
             
             narrativa = gerar_narrativa_premium(probs, t_home, t_away, config, dados)
-            
+
+            # Força a largura total real da página
+            st.markdown("""
+                <style>
+                .full-width-container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .veredito-box {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            # Container full width
+            st.markdown('<div class="full-width-container">', unsafe_allow_html=True)
+
+            # Veredito
             st.markdown(f"""
             <div class="veredito-box" style="border-color: {narrativa['cor']}">
-                <h2 style="margin:0; color:{narrativa['cor']}; text-shadow: 0 0 15px {narrativa['cor']}; letter-spacing: 2px;">{narrativa['titulo']}</h2>
+                <h2 style="margin:0; color:{narrativa['cor']}; 
+                    text-shadow: 0 0 15px {narrativa['cor']}; 
+                    letter-spacing: 2px;">
+                    {narrativa['titulo']}
+                </h2>
                 <div style="margin-top:20px; font-size:1.2rem; line-height:1.6; color:#EEE">
                     {narrativa['texto'].replace('\n', '<br>')}
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
             st.markdown("<br>", unsafe_allow_html=True)
-            
+
+            # Gráfico
             df_chart = pd.DataFrame({
                 "Time": [t_home, "Empate", t_away],
                 "Probabilidade": [probs['mandante'], probs['empate'], probs['visitante']],
                 "Cor": [assets_h['colors'][0], "#888888", assets_a['colors'][0]]
             })
-            
-            fig = px.bar(df_chart, x="Probabilidade", y="Time", orientation='h', text_auto='.1%', 
-                         color="Time", color_discrete_sequence=df_chart["Cor"].tolist())
-            
+
+            fig = px.bar(
+                df_chart, 
+                x="Probabilidade", 
+                y="Time", 
+                orientation='h', 
+                text_auto='.1%', 
+                color="Time", 
+                color_discrete_sequence=df_chart["Cor"].tolist()
+            )
+
             fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)', 
+                plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='white', size=16),
                 showlegend=False,
                 margin=dict(l=0, r=0, t=20, b=0),
                 height=300,
                 xaxis=dict(showgrid=False, range=[0, 1])
             )
+
             st.plotly_chart(fig, use_container_width=True)
 
 # >>> ABA 2: ESTATÍSTICAS HISTÓRICAS
